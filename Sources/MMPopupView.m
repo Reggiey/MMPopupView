@@ -10,7 +10,6 @@
 #import "MMPopupWindow.h"
 #import "MMPopupDefine.h"
 #import "MMPopupCategory.h"
-#import <Masonry/Masonry.h>
 
 static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNotification";
 
@@ -171,9 +170,26 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
         if ( !self.superview )
         {
             [self.attachedView.mm_dimBackgroundView addSubview:self];
-            [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                make.center.equalTo(self.attachedView).centerOffset(CGPointMake(0, self.withKeyboard?-216/2:0));
-            }];
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 首先，移除已有的约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeCenterX) {
+                    [self removeConstraint:constraint];
+                }
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeCenterY) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.centerXAnchor constraintEqualToAnchor:self.attachedView.centerXAnchor],
+                [self.centerYAnchor constraintEqualToAnchor:self.attachedView.centerYAnchor constant:self.withKeyboard ? -216/2 : 0]
+            ]];
+
+            
             [self layoutIfNeeded];
         }
         
@@ -183,17 +199,17 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
         [UIView animateWithDuration:self.animationDuration
                               delay:0.0 options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-                             
-                             self.layer.transform = CATransform3DIdentity;
-                             self.alpha = 1.0f;
-                             
-                         } completion:^(BOOL finished) {
-                             
-                             if ( self.showCompletionBlock )
-                             {
-                                 self.showCompletionBlock(self, finished);
-                             }
-                         }];
+            
+            self.layer.transform = CATransform3DIdentity;
+            self.alpha = 1.0f;
+            
+        } completion:^(BOOL finished) {
+            
+            if ( self.showCompletionBlock )
+            {
+                self.showCompletionBlock(self, finished);
+            }
+        }];
     };
     
     return block;
@@ -209,23 +225,23 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
                               delay:0
                             options: UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-                             
-                             self.alpha = 0.0f;
-                             
-                         }
+            
+            self.alpha = 0.0f;
+            
+        }
                          completion:^(BOOL finished) {
-                             
-                             if ( finished )
-                             {
-                                 [self removeFromSuperview];
-                             }
-                             
-                             if ( self.hideCompletionBlock )
-                             {
-                                 self.hideCompletionBlock(self, finished);
-                             }
-                             
-                         }];
+            
+            if ( finished )
+            {
+                [self removeFromSuperview];
+            }
+            
+            if ( self.hideCompletionBlock )
+            {
+                self.hideCompletionBlock(self, finished);
+            }
+            
+        }];
     };
     
     return block;
@@ -241,10 +257,25 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
         {
             [self.attachedView.mm_dimBackgroundView addSubview:self];
             
-            [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                make.centerX.equalTo(self.attachedView);
-                make.bottom.equalTo(self.attachedView.mas_bottom).offset(self.attachedView.frame.size.height);
-            }];
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 移除已有的约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeCenterX) {
+                    [self removeConstraint:constraint];
+                }
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeBottom) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.centerXAnchor constraintEqualToAnchor:self.attachedView.centerXAnchor],
+                [self.bottomAnchor constraintEqualToAnchor:self.attachedView.bottomAnchor constant:self.attachedView.frame.size.height]
+            ]];
+
             [self layoutIfNeeded];
         }
         
@@ -252,22 +283,34 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
                               delay:0
                             options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-                             
-                             [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                                 make.bottom.equalTo(self.attachedView.mas_bottom).offset(0);
-                             }];
-                             
-                             [self.superview layoutIfNeeded];
-                             
-                         }
+            
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 移除已有的底部约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeBottom) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的底部约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.bottomAnchor constraintEqualToAnchor:self.attachedView.bottomAnchor constant:0]
+            ]];
+
+            
+            [self.superview layoutIfNeeded];
+            
+        }
                          completion:^(BOOL finished) {
-                             
-                             if ( self.showCompletionBlock )
-                             {
-                                 self.showCompletionBlock(self, finished);
-                             }
-                             
-                         }];
+            
+            if ( self.showCompletionBlock )
+            {
+                self.showCompletionBlock(self, finished);
+            }
+            
+        }];
     };
     
     return block;
@@ -283,27 +326,39 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
                               delay:0
                             options:UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-                             
-                             [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                                 make.bottom.equalTo(self.attachedView.mas_bottom).offset(self.attachedView.frame.size.height);
-                             }];
-                             
-                             [self.superview layoutIfNeeded];
-                             
-                         }
+            
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 移除已有的底部约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeBottom) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的底部约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.bottomAnchor constraintEqualToAnchor:self.attachedView.bottomAnchor constant:self.attachedView.frame.size.height]
+            ]];
+
+            
+            [self.superview layoutIfNeeded];
+            
+        }
                          completion:^(BOOL finished) {
-                             
-                             if ( finished )
-                             {
-                                 [self removeFromSuperview];
-                             }
-                             
-                             if ( self.hideCompletionBlock )
-                             {
-                                 self.hideCompletionBlock(self, finished);
-                             }
-                             
-                         }];
+            
+            if ( finished )
+            {
+                [self removeFromSuperview];
+            }
+            
+            if ( self.hideCompletionBlock )
+            {
+                self.hideCompletionBlock(self, finished);
+            }
+            
+        }];
     };
     
     return block;
@@ -318,9 +373,21 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
         if ( !self.superview )
         {
             [self.attachedView.mm_dimBackgroundView addSubview:self];
-            [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                make.center.equalTo(self.attachedView).centerOffset(CGPointMake(0, -self.attachedView.bounds.size.height));
-            }];
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 移除已有的底部约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && constraint.firstAttribute == NSLayoutAttributeBottom) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的底部约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.bottomAnchor constraintEqualToAnchor:self.attachedView.bottomAnchor constant:self.attachedView.frame.size.height]
+            ]];
+
             [self layoutIfNeeded];
         }
         
@@ -330,21 +397,34 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
               initialSpringVelocity:1.5
                             options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-                             
-                             [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                                 make.center.equalTo(self.attachedView).centerOffset(CGPointMake(0, self.withKeyboard?-216/2:0));
-                             }];
-                             
-                             [self.superview layoutIfNeeded];
-                             
-                         } completion:^(BOOL finished) {
-                             
-                             if ( self.showCompletionBlock )
-                             {
-                                 self.showCompletionBlock(self, finished);
-                             }
-                             
-                         }];
+            
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 移除已有的约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && (constraint.firstAttribute == NSLayoutAttributeCenterX || constraint.firstAttribute == NSLayoutAttributeCenterY)) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.centerXAnchor constraintEqualToAnchor:self.attachedView.centerXAnchor],
+                [self.centerYAnchor constraintEqualToAnchor:self.attachedView.centerYAnchor constant:self.withKeyboard ? -216 / 2 : 0]
+            ]];
+
+            
+            [self.superview layoutIfNeeded];
+            
+        } completion:^(BOOL finished) {
+            
+            if ( self.showCompletionBlock )
+            {
+                self.showCompletionBlock(self, finished);
+            }
+            
+        }];
     };
     
     return block;
@@ -360,25 +440,38 @@ static NSString * const MMPopupViewHideAllNotification = @"MMPopupViewHideAllNot
                               delay:0
                             options:UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState
                          animations:^{
-                             
-                             [self mas_updateConstraints:^(MASConstraintMaker *make) {
-                                 make.center.equalTo(self.attachedView).centerOffset(CGPointMake(0, self.attachedView.bounds.size.height));
-                             }];
-                             
-                             [self.superview layoutIfNeeded];
-                             
-                         } completion:^(BOOL finished) {
-                             
-                             if ( finished )
-                             {
-                                 [self removeFromSuperview];
-                             }
-                             
-                             if ( self.hideCompletionBlock )
-                             {
-                                 self.hideCompletionBlock(self, finished);
-                             }
-                         }];
+            
+            self.translatesAutoresizingMaskIntoConstraints = NO;
+
+            // 移除已有的约束（如果有的话）
+            NSArray *existingConstraints = [self.constraints copy];
+            for (NSLayoutConstraint *constraint in existingConstraints) {
+                if (constraint.firstItem == self && (constraint.firstAttribute == NSLayoutAttributeCenterX || constraint.firstAttribute == NSLayoutAttributeCenterY)) {
+                    [self removeConstraint:constraint];
+                }
+            }
+
+            // 添加新的约束
+            [NSLayoutConstraint activateConstraints:@[
+                [self.centerXAnchor constraintEqualToAnchor:self.attachedView.centerXAnchor],
+                [self.centerYAnchor constraintEqualToAnchor:self.attachedView.centerYAnchor constant:self.withKeyboard ? -216 / 2 : 0]
+            ]];
+
+            
+            [self.superview layoutIfNeeded];
+            
+        } completion:^(BOOL finished) {
+            
+            if ( finished )
+            {
+                [self removeFromSuperview];
+            }
+            
+            if ( self.hideCompletionBlock )
+            {
+                self.hideCompletionBlock(self, finished);
+            }
+        }];
     };
     
     return block;

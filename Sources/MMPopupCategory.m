@@ -9,7 +9,6 @@
 #import "MMPopupCategory.h"
 #import "MMPopupDefine.h"
 #import "MMPopupWindow.h"
-#import <Masonry/Masonry.h>
 #import <objc/runtime.h>
 
 @implementation UIColor (MMPopup)
@@ -135,23 +134,27 @@ static const void *mm_dimBackgroundBlurEffectStyleKey = &mm_dimBackgroundBlurEff
 
 
 //mm_dimBackgroundView
-- (UIView *)mm_dimBackgroundView
-{
+- (UIView *)mm_dimBackgroundView {
     UIView *dimView = objc_getAssociatedObject(self, mm_dimBackgroundViewKey);
     
-    if ( !dimView )
-    {
+    if (!dimView) {
         dimView = [UIView new];
         [self addSubview:dimView];
-        [dimView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.edges.equalTo(self);
-        }];
+        
+        dimView.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [dimView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+            [dimView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+            [dimView.topAnchor constraintEqualToAnchor:self.topAnchor],
+            [dimView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
+        ]];
+
         dimView.alpha = 0.0f;
         dimView.backgroundColor = MMHexColor(0x0000007F);
         dimView.layer.zPosition = FLT_MAX;
-        
+
         self.mm_dimAnimationDuration = 0.3f;
-        
+
         objc_setAssociatedObject(self, mm_dimBackgroundViewKey, dimView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     
@@ -198,32 +201,34 @@ static const void *mm_dimBackgroundBlurEffectStyleKey = &mm_dimBackgroundBlurEff
         
         UIView *blurView = [self mm_dimBackgroundBlurView];
         [self.mm_dimBackgroundView addSubview:blurView];
-        [blurView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.edges.equalTo(self.mm_dimBackgroundView);
-        }];
+        [NSLayoutConstraint activateConstraints:@[
+            [blurView.leadingAnchor constraintEqualToAnchor:self.mm_dimBackgroundView.leadingAnchor],
+            [blurView.trailingAnchor constraintEqualToAnchor:self.mm_dimBackgroundView.trailingAnchor],
+            [blurView.topAnchor constraintEqualToAnchor:self.mm_dimBackgroundView.topAnchor],
+            [blurView.bottomAnchor constraintEqualToAnchor:self.mm_dimBackgroundView.bottomAnchor]
+        ]];
     }
 }
 
 //mm_dimBackgroundBlurView
-- (UIView *)mm_dimBackgroundBlurView
-{
+- (UIView *)mm_dimBackgroundBlurView {
     UIView *blurView = objc_getAssociatedObject(self, mm_dimBackgroundBlurViewKey);
     
-    if ( !blurView )
-    {
+    if (!blurView) {
         blurView = [UIView new];
         
-        if ( [UIVisualEffectView class] )
-        {
+        if ([UIVisualEffectView class]) {
             UIVisualEffectView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:self.mm_dimBackgroundBlurEffectStyle]];
             [blurView addSubview:effectView];
-            [effectView mas_makeConstraints:^(MASConstraintMaker *make) {
-                make.edges.equalTo(blurView);
-            }];
-        }
-        else
-        {
-            blurView.backgroundColor = @[MMHexColor(0x000007F),MMHexColor(0xFFFFFF7F),MMHexColor(0xFFFFFF7F)][self.mm_dimBackgroundBlurEffectStyle];
+            effectView.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [effectView.leadingAnchor constraintEqualToAnchor:blurView.leadingAnchor],
+                [effectView.trailingAnchor constraintEqualToAnchor:blurView.trailingAnchor],
+                [effectView.topAnchor constraintEqualToAnchor:blurView.topAnchor],
+                [effectView.bottomAnchor constraintEqualToAnchor:blurView.bottomAnchor]
+            ]];
+        } else {
+            blurView.backgroundColor = @[MMHexColor(0x000007F), MMHexColor(0xFFFFFF7F), MMHexColor(0xFFFFFF7F)][self.mm_dimBackgroundBlurEffectStyle];
         }
         blurView.userInteractionEnabled = NO;
         
@@ -260,30 +265,23 @@ static const void *mm_dimBackgroundBlurEffectStyleKey = &mm_dimBackgroundBlurEff
     objc_setAssociatedObject(self, mm_dimAnimationDurationKey, @(mm_dimAnimationDuration), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (void)mm_showDimBackground
-{
+- (void)mm_showDimBackground {
     ++self.mm_dimReferenceCount;
     
-    if ( self.mm_dimReferenceCount > 1 )
-    {
+    if (self.mm_dimReferenceCount > 1) {
         return;
     }
     
     self.mm_dimBackgroundView.hidden = NO;
     self.mm_dimBackgroundAnimating = YES;
     
-    if ( self == [MMPopupWindow sharedWindow].attachView )
-    {
+    if (self == [MMPopupWindow sharedWindow].attachView) {
         [MMPopupWindow sharedWindow].hidden = NO;
         [[MMPopupWindow sharedWindow] makeKeyAndVisible];
-    }
-    else if ( [self isKindOfClass:[UIWindow class]] )
-    {
+    } else if ([self isKindOfClass:[UIWindow class]]) {
         self.hidden = NO;
-        [(UIWindow*)self makeKeyAndVisible];
-    }
-    else
-    {
+        [(UIWindow *)self makeKeyAndVisible];
+    } else {
         [self bringSubviewToFront:self.mm_dimBackgroundView];
     }
     
@@ -291,25 +289,18 @@ static const void *mm_dimBackgroundBlurEffectStyleKey = &mm_dimBackgroundBlurEff
                           delay:0
                         options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                      animations:^{
-                         
                          self.mm_dimBackgroundView.alpha = 1.0f;
-                         
                      } completion:^(BOOL finished) {
-                         
-                         if ( finished )
-                         {
+                         if (finished) {
                              self.mm_dimBackgroundAnimating = NO;
                          }
-                         
                      }];
 }
 
-- (void)mm_hideDimBackground
-{
+- (void)mm_hideDimBackground {
     --self.mm_dimReferenceCount;
     
-    if ( self.mm_dimReferenceCount > 0 )
-    {
+    if (self.mm_dimReferenceCount > 0) {
         return;
     }
     
@@ -318,22 +309,15 @@ static const void *mm_dimBackgroundBlurEffectStyleKey = &mm_dimBackgroundBlurEff
                           delay:0
                         options:UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState
                      animations:^{
-                         
                          self.mm_dimBackgroundView.alpha = 0.0f;
-                         
                      } completion:^(BOOL finished) {
-                         
-                         if ( finished )
-                         {
+                         if (finished) {
                              self.mm_dimBackgroundAnimating = NO;
                              
-                             if ( self == [MMPopupWindow sharedWindow].attachView )
-                             {
+                             if (self == [MMPopupWindow sharedWindow].attachView) {
                                  [MMPopupWindow sharedWindow].hidden = YES;
                                  [[[UIApplication sharedApplication].delegate window] makeKeyWindow];
-                             }
-                             else if ( self == [MMPopupWindow sharedWindow] )
-                             {
+                             } else if (self == [MMPopupWindow sharedWindow]) {
                                  self.hidden = YES;
                                  [[[UIApplication sharedApplication].delegate window] makeKeyWindow];
                              }
@@ -341,98 +325,86 @@ static const void *mm_dimBackgroundBlurEffectStyleKey = &mm_dimBackgroundBlurEff
                      }];
 }
 
-- (void) mm_distributeSpacingHorizontallyWith:(NSArray*)views
-{
-    NSMutableArray *spaces = [NSMutableArray arrayWithCapacity:views.count+1];
+- (void)mm_distributeSpacingHorizontallyWith:(NSArray *)views {
+    NSMutableArray *spaces = [NSMutableArray arrayWithCapacity:views.count + 1];
     
-    for ( int i = 0 ; i < views.count+1 ; ++i )
-    {
+    for (int i = 0; i < views.count + 1; ++i) {
         UIView *v = [UIView new];
         [spaces addObject:v];
         [self addSubview:v];
         
-        [v mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.width.equalTo(v.mas_height);
-        }];
+        v.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [v.widthAnchor constraintEqualToAnchor:v.heightAnchor]
+        ]];
     }
     
     UIView *v0 = spaces[0];
     
-    [v0 mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.mas_left);
-        make.centerY.equalTo(((UIView*)views[0]).mas_centerY);
-    }];
+    [NSLayoutConstraint activateConstraints:@[
+        [v0.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+        [v0.centerYAnchor constraintEqualToAnchor:((UIView *)views[0]).centerYAnchor]
+    ]];
     
     UIView *lastSpace = v0;
-    for ( int i = 0 ; i < views.count; ++i )
-    {
+    for (int i = 0; i < views.count; ++i) {
         UIView *obj = views[i];
-        UIView *space = spaces[i+1];
+        UIView *space = spaces[i + 1];
         
-        [obj mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.equalTo(lastSpace.mas_right);
-        }];
-        
-        [space mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.equalTo(obj.mas_right);
-            make.centerY.equalTo(obj.mas_centerY);
-            make.width.equalTo(v0);
-        }];
+        [NSLayoutConstraint activateConstraints:@[
+            [obj.leadingAnchor constraintEqualToAnchor:lastSpace.trailingAnchor],
+            [space.leadingAnchor constraintEqualToAnchor:obj.trailingAnchor],
+            [space.centerYAnchor constraintEqualToAnchor:obj.centerYAnchor],
+            [space.widthAnchor constraintEqualToAnchor:v0.widthAnchor]
+        ]];
         
         lastSpace = space;
     }
     
-    [lastSpace mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.mas_right);
-    }];
-    
+    [NSLayoutConstraint activateConstraints:@[
+        [lastSpace.trailingAnchor constraintEqualToAnchor:self.trailingAnchor]
+    ]];
 }
 
-- (void) mm_distributeSpacingVerticallyWith:(NSArray*)views
-{
-    NSMutableArray *spaces = [NSMutableArray arrayWithCapacity:views.count+1];
+- (void)mm_distributeSpacingVerticallyWith:(NSArray *)views {
+    NSMutableArray *spaces = [NSMutableArray arrayWithCapacity:views.count + 1];
     
-    for ( int i = 0 ; i < views.count+1 ; ++i )
-    {
+    for (int i = 0; i < views.count + 1; ++i) {
         UIView *v = [UIView new];
         [spaces addObject:v];
         [self addSubview:v];
         
-        [v mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.width.equalTo(v.mas_height);
-        }];
+        v.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [v.widthAnchor constraintEqualToAnchor:v.heightAnchor]
+        ]];
     }
     
     UIView *v0 = spaces[0];
     
-    [v0 mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.mas_top);
-        make.centerX.equalTo(((UIView*)views[0]).mas_centerX);
-    }];
+    [NSLayoutConstraint activateConstraints:@[
+        [v0.topAnchor constraintEqualToAnchor:self.topAnchor],
+        [v0.centerXAnchor constraintEqualToAnchor:((UIView *)views[0]).centerXAnchor]
+    ]];
     
     UIView *lastSpace = v0;
-    for ( int i = 0 ; i < views.count; ++i )
-    {
+    for (int i = 0; i < views.count; ++i) {
         UIView *obj = views[i];
-        UIView *space = spaces[i+1];
+        UIView *space = spaces[i + 1];
         
-        [obj mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.equalTo(lastSpace.mas_bottom);
-        }];
-        
-        [space mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.equalTo(obj.mas_bottom);
-            make.centerX.equalTo(obj.mas_centerX);
-            make.height.equalTo(v0);
-        }];
+        [NSLayoutConstraint activateConstraints:@[
+            [obj.topAnchor constraintEqualToAnchor:lastSpace.bottomAnchor],
+            [space.topAnchor constraintEqualToAnchor:obj.bottomAnchor],
+            [space.centerXAnchor constraintEqualToAnchor:obj.centerXAnchor],
+            [space.heightAnchor constraintEqualToAnchor:v0.heightAnchor]
+        ]];
         
         lastSpace = space;
     }
     
-    [lastSpace mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.bottom.equalTo(self.mas_bottom);
-    }];
-    
+    [NSLayoutConstraint activateConstraints:@[
+        [lastSpace.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
+    ]];
 }
 
 @end

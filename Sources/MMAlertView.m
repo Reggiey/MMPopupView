@@ -10,7 +10,6 @@
 #import "MMPopupItem.h"
 #import "MMPopupCategory.h"
 #import "MMPopupDefine.h"
-#import <Masonry/Masonry.h>
 
 @interface MMAlertView()
 
@@ -64,12 +63,10 @@
                        detail:(NSString *)detail
                         items:(NSArray *)items
              inputPlaceholder:(NSString *)inputPlaceholder
-                 inputHandler:(MMPopupInputHandler)inputHandler
-{
+                 inputHandler:(MMPopupInputHandler)inputHandler {
     self = [super init];
     
-    if ( self )
-    {
+    if ( self ) {
         NSAssert(items.count>0, @"Could not find any items.");
         
         MMAlertViewConfig *config = [MMAlertViewConfig globalConfig];
@@ -86,21 +83,23 @@
         self.layer.borderWidth = MM_SPLIT_WIDTH;
         self.layer.borderColor = config.splitColor.CGColor;
         
-        [self mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.width.mas_equalTo(config.width);
-        }];
+        self.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [self.widthAnchor constraintEqualToConstant:config.width]
+        ]];
         [self setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
         [self setContentHuggingPriority:UILayoutPriorityFittingSizeLevel forAxis:UILayoutConstraintAxisVertical];
         
-        MASViewAttribute *lastAttribute = self.mas_top;
-        if ( title.length > 0 )
-        {
+        NSLayoutAnchor *lastAttribute = self.topAnchor;
+        if ( title.length > 0 ) {
             self.titleLabel = [UILabel new];
             [self addSubview:self.titleLabel];
-            [self.titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-                make.top.equalTo(lastAttribute).offset(config.innerMargin);
-                make.left.right.equalTo(self).insets(UIEdgeInsetsMake(0, config.innerMargin, 0, config.innerMargin));
-            }];
+            self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.titleLabel.topAnchor constraintEqualToAnchor: lastAttribute constant:config.innerMargin],
+                [self.titleLabel.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:config.innerMargin],
+                [self.titleLabel.rightAnchor constraintEqualToAnchor:self.rightAnchor constant:-config.innerMargin]
+            ]];
             self.titleLabel.textColor = config.titleColor;
             self.titleLabel.textAlignment = NSTextAlignmentCenter;
             self.titleLabel.font = [UIFont boldSystemFontOfSize:config.titleFontSize];
@@ -108,17 +107,18 @@
             self.titleLabel.backgroundColor = self.backgroundColor;
             self.titleLabel.text = title;
             
-            lastAttribute = self.titleLabel.mas_bottom;
+            lastAttribute = self.titleLabel.bottomAnchor;
         }
         
-        if ( detail.length > 0 )
-        {
+        if ( detail.length > 0 ) {
             self.detailLabel = [UILabel new];
             [self addSubview:self.detailLabel];
-            [self.detailLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-                make.top.equalTo(lastAttribute).offset(5);
-                make.left.right.equalTo(self).insets(UIEdgeInsetsMake(0, config.innerMargin, 0, config.innerMargin));
-            }];
+            self.detailLabel.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.detailLabel.topAnchor constraintEqualToAnchor: lastAttribute constant:5],
+                [self.detailLabel.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:config.innerMargin],
+                [self.detailLabel.rightAnchor constraintEqualToAnchor:self.rightAnchor constant:-config.innerMargin]
+            ]];
             self.detailLabel.textColor = config.detailColor;
             self.detailLabel.textAlignment = NSTextAlignmentCenter;
             self.detailLabel.font = [UIFont systemFontOfSize:config.detailFontSize];
@@ -126,18 +126,19 @@
             self.detailLabel.backgroundColor = self.backgroundColor;
             self.detailLabel.text = detail;
             
-            lastAttribute = self.detailLabel.mas_bottom;
+            lastAttribute = self.detailLabel.bottomAnchor;
         }
         
-        if ( self.inputHandler )
-        {
+        if (self.inputHandler) {
             self.inputView = [UITextField new];
             [self addSubview:self.inputView];
-            [self.inputView mas_makeConstraints:^(MASConstraintMaker *make) {
-                make.top.equalTo(lastAttribute).offset(10);
-                make.left.right.equalTo(self).insets(UIEdgeInsetsMake(0, config.innerMargin, 0, config.innerMargin));
-                make.height.mas_equalTo(40);
-            }];
+            self.inputView.translatesAutoresizingMaskIntoConstraints = NO;
+            [NSLayoutConstraint activateConstraints:@[
+                [self.inputView.topAnchor constraintEqualToAnchor: lastAttribute constant:10],
+                [self.inputView.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:config.innerMargin],
+                [self.inputView.rightAnchor constraintEqualToAnchor:self.rightAnchor constant:-config.innerMargin],
+                [self.inputView.heightAnchor constraintEqualToConstant:40]
+            ]];
             self.inputView.backgroundColor = self.backgroundColor;
             self.inputView.layer.borderWidth = MM_SPLIT_WIDTH;
             self.inputView.layer.borderColor = config.splitColor.CGColor;
@@ -146,63 +147,69 @@
             self.inputView.clearButtonMode = UITextFieldViewModeWhileEditing;
             self.inputView.placeholder = inputPlaceholder;
             
-            lastAttribute = self.inputView.mas_bottom;
+            lastAttribute = self.inputView.bottomAnchor;
         }
         
         self.buttonView = [UIView new];
         [self addSubview:self.buttonView];
-        [self.buttonView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.equalTo(lastAttribute).offset(config.innerMargin);
-            make.left.right.equalTo(self);
-        }];
+        self.buttonView.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints:@[
+            [self.buttonView.topAnchor constraintEqualToAnchor: lastAttribute constant:config.innerMargin],
+            [self.buttonView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
+            [self.buttonView.rightAnchor constraintEqualToAnchor:self.rightAnchor]
+        ]];
         
         __block UIButton *firstButton = nil;
         __block UIButton *lastButton = nil;
-        for ( NSInteger i = 0 ; i < items.count; ++i )
-        {
+        for ( NSInteger i = 0 ; i < items.count; ++i ) {
             MMPopupItem *item = items[i];
             
             UIButton *btn = [UIButton mm_buttonWithTarget:self action:@selector(actionButton:)];
             [self.buttonView addSubview:btn];
             btn.tag = i;
             
-            [btn mas_makeConstraints:^(MASConstraintMaker *make) {
+            btn.translatesAutoresizingMaskIntoConstraints = NO;
+            
+            if (items.count <= 2) {
+                [NSLayoutConstraint activateConstraints:@[
+                    [btn.topAnchor constraintEqualToAnchor:self.buttonView.topAnchor],
+                    [btn.bottomAnchor constraintEqualToAnchor:self.buttonView.bottomAnchor],
+                    [btn.heightAnchor constraintEqualToConstant:config.buttonHeight],
+                ]];
                 
-                if ( items.count <= 2 )
-                {
-                    make.top.bottom.equalTo(self.buttonView);
-                    make.height.mas_equalTo(config.buttonHeight);
-                    
-                    if ( !firstButton )
-                    {
-                        firstButton = btn;
-                        make.left.equalTo(self.buttonView.mas_left).offset(-MM_SPLIT_WIDTH);
-                    }
-                    else
-                    {
-                        make.left.equalTo(lastButton.mas_right).offset(-MM_SPLIT_WIDTH);
-                        make.width.equalTo(firstButton);
-                    }
+                if (!firstButton) {
+                    firstButton = btn;
+                    [NSLayoutConstraint activateConstraints:@[
+                        [btn.leftAnchor constraintEqualToAnchor:self.buttonView.leftAnchor constant:-MM_SPLIT_WIDTH]
+                    ]];
+                } else {
+                    [NSLayoutConstraint activateConstraints:@[
+                        [btn.leftAnchor constraintEqualToAnchor:lastButton.rightAnchor constant:-MM_SPLIT_WIDTH],
+                        [btn.widthAnchor constraintEqualToAnchor:firstButton.widthAnchor]
+                    ]];
                 }
-                else
-                {
-                    make.left.right.equalTo(self.buttonView);
-                    make.height.mas_equalTo(config.buttonHeight);
-                    
-                    if ( !firstButton )
-                    {
-                        firstButton = btn;
-                        make.top.equalTo(self.buttonView.mas_top).offset(-MM_SPLIT_WIDTH);
-                    }
-                    else
-                    {
-                        make.top.equalTo(lastButton.mas_bottom).offset(-MM_SPLIT_WIDTH);
-                        make.width.equalTo(firstButton);
-                    }
-                }
+            } else {
+                [NSLayoutConstraint activateConstraints:@[
+                    [btn.leftAnchor constraintEqualToAnchor:self.buttonView.leftAnchor],
+                    [btn.rightAnchor constraintEqualToAnchor:self.buttonView.rightAnchor],
+                    [btn.heightAnchor constraintEqualToConstant:config.buttonHeight],
+                ]];
                 
-                lastButton = btn;
-            }];
+                if (!firstButton) {
+                    firstButton = btn;
+                    [NSLayoutConstraint activateConstraints:@[
+                        [btn.topAnchor constraintEqualToAnchor:self.buttonView.topAnchor constant:-MM_SPLIT_WIDTH]
+                    ]];
+                } else {
+                    [NSLayoutConstraint activateConstraints:@[
+                        [btn.topAnchor constraintEqualToAnchor:lastButton.bottomAnchor constant:-MM_SPLIT_WIDTH],
+                        [btn.widthAnchor constraintEqualToAnchor:firstButton.widthAnchor]
+                    ]];
+                }
+            }
+            
+            lastButton = btn;
+            
             [btn setBackgroundImage:[UIImage mm_imageWithColor:self.backgroundColor] forState:UIControlStateNormal];
             [btn setBackgroundImage:[UIImage mm_imageWithColor:config.itemPressedColor] forState:UIControlStateHighlighted];
             [btn setTitle:item.title forState:UIControlStateNormal];
@@ -211,24 +218,29 @@
             btn.layer.borderColor = config.splitColor.CGColor;
             btn.titleLabel.font = (item==items.lastObject)?[UIFont boldSystemFontOfSize:config.buttonFontSize]:[UIFont systemFontOfSize:config.buttonFontSize];
         }
-        [lastButton mas_updateConstraints:^(MASConstraintMaker *make) {
-            
-            if ( items.count <= 2 )
-            {
-                make.right.equalTo(self.buttonView.mas_right).offset(MM_SPLIT_WIDTH);
-            }
-            else
-            {
-                make.bottom.equalTo(self.buttonView.mas_bottom).offset(MM_SPLIT_WIDTH);
-            }
-            
-        }];
         
-        [self mas_updateConstraints:^(MASConstraintMaker *make) {
-            
-            make.bottom.equalTo(self.buttonView.mas_bottom);
-            
-        }];
+        // 确保禁用自动翻译约束
+        lastButton.translatesAutoresizingMaskIntoConstraints = NO;
+        self.buttonView.translatesAutoresizingMaskIntoConstraints = NO;
+
+        // 清除以前的约束
+        [lastButton removeConstraints:lastButton.constraints];
+        [self removeConstraints:self.constraints];
+
+        // 创建新的约束
+        NSMutableArray *constraints = [NSMutableArray array];
+
+        if (items.count <= 2) {
+            [constraints addObject:[lastButton.trailingAnchor constraintEqualToAnchor:self.buttonView.trailingAnchor constant:MM_SPLIT_WIDTH]];
+        } else {
+            [constraints addObject:[lastButton.bottomAnchor constraintEqualToAnchor:self.buttonView.bottomAnchor constant:MM_SPLIT_WIDTH]];
+        }
+
+        // 添加总是存在的约束
+        [constraints addObject:[self.bottomAnchor constraintEqualToAnchor:self.buttonView.bottomAnchor]];
+
+        // 激活约束
+        [NSLayoutConstraint activateConstraints:constraints];
     }
     
     
