@@ -6,13 +6,10 @@ import PackageDescription
 let package = Package(
     name: "MMPopupView",
     platforms: [
-        .iOS(.v9)
+        .iOS(.v12)
     ],
     products: [
         .library(name: "MMPopupView", targets: ["MMPopupView"]),
-    ],
-    dependencies: [
-
     ],
     targets: [
         .target(name: "MMPopupView", path: "Sources", exclude: []),
